@@ -1,4 +1,4 @@
-To compute voxel-wise freqency map, please refer to freqmap.m
+To compute voxel-wise prefered-freqency map, please refer to freqmap.m
 
 To process block-designed data and compute the activity map, please refer to event.proc.40Hz.sh (or event.proc.sh)
 
