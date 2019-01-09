@@ -6,4 +6,6 @@ To preprocess steady-state connectivity data for connectivity analysis, please r
 
 To compute connectivity map, please refer to rsfc.sh
 
+For the scanning protocal, please refer to visualfreq_protocol.pdf
+
 Contact yhchai@outlook.com for further questions.
