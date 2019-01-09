@@ -1,0 +1,70 @@
+function graph_analysis_module(subj_dir,graph_file,M_file,thr)
+% subj_dir='/data/chaiy3/visualFreq/170322Sub009/conn_fix.results/rsfc';
+% graph_file='roi950_allvec_cor_z.1D';
+% addpath(genpath('/data/chaiy3/Toolbox'))
+
+curr_dir=pwd;
+results_dir='/data/chaiy3/visualFreq/graph.results';
+if ~exist('thr','var') || isempty(thr)
+    thr = 0.1;
+else
+	thr = str2num(thr);    	
+end
+
+% =============================================================================
+% weighted
+cd(results_dir)
+roi_index_file=[char(extractBefore(graph_file,'_all')) '_index.1D'];
+roi_index=load(roi_index_file);
+% mask_file=[char(extractBefore(graph_file,'_all')) '_mask.1D'];
+% mask=load(mask_file);
+M=load(M_file);
+cd(subj_dir)
+graph=load(graph_file);
+temp_roi_index=load(roi_index_file);
+[~,index,~]=intersect(temp_roi_index,roi_index);
+graph=graph(index,index);
+% graph=graph.*mask;
+graph=graph.*(graph>0);
+graph=threshold_proportional(graph,thr);
+
+fprintf('++ Start analyzing (weighted) %s \n in %s \n',graph_file,subj_dir);
+nw_list={'DMN';'VS';'VSp';'SM';'SN';'Cb';'Tha'};
+
+fprintf('++ Start analyzing connection strength in and between modules\n');
+nw_betw_num=length(nw_list)*(length(nw_list)-1)/2;
+str_in_module=zeros(size(M));
+str_betw_module=zeros(size(M));
+M_max=max(M);
+betw_index=1;
+for module=1:M_max
+	str_in_module=zeros(size(M));
+	[row,~]=find(M==module);
+	graph_in_module=graph(row,row);
+	str_in_module(row)=sum(graph_in_module,2);
+	dlmwrite(replace(graph_file,'cor_z',['str_in_' char(nw_list(module)) ...
+		'_thr' num2str(thr)]),str_in_module,'precision','%.4f');
+	if module<M_max
+		for module_2nd=(module+1):M_max
+			str_betw_module=zeros(size(M));
+			[row_2nd,~]=find(M==module_2nd);
+			graph_betw_module=graph(row,row_2nd);
+			str_betw_module(row)=sum(graph_betw_module,2);
+			str_betw_module(row_2nd)=[sum(graph_betw_module,1)]';
+			file_name=replace(graph_file,'cor_z',['str_betw_' char(nw_list(module))...
+				'_' char(nw_list(module_2nd)) '_thr']);
+			dlmwrite(insertBefore(file_name,'.1D',num2str(thr)),str_betw_module,'precision','%.4f');
+		end
+	end
+end
+
+
+fprintf('++ Start analyzing Within-module degree z-score and Participation coefficient\n');
+WD=module_degree_zscore(graph,M);
+PC=participation_coef(graph,M);
+dlmwrite(replace(graph_file,'cor_z',['WD_thr' num2str(thr)]),WD,'precision','%.4f');
+dlmwrite(replace(graph_file,'cor_z',['PC_thr'  num2str(thr)]),PC,'precision','%.4f');
+
+cd(curr_dir);
+end
+
